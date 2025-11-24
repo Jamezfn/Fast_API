@@ -1,11 +1,15 @@
+from __future__ import annotations
+
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy import Boolean, ForeignKey, String, Integer, Enum, Text, DateTime, func
 
-from datetime import datetime
 import enum
 
-from api.models.course import CompletedContentBlock, CompletedCourse, CompletedSection, Course, StudentCourse
-from base import Base
+from typing import TYPE_CHECKING
+from .base import Base
+
+if TYPE_CHECKING:
+    from .course import CompletedContentBlock, Course, StudentCourse, CompletedSection, CompletedCourse
 
 class UserRole(enum.Enum):
     teacher = 'teacher'
