@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 
 from db import get_db
 from api.models.user import User
-from api.crud.user import create_user, get_user_by_email, get_user_by_id
+from api.crud.user import create_user, get_user_by_email, get_user_by_id, get_all_users, delete_user
 from schemas.user import UserCreate, ShowUser
 
 router = APIRouter(
@@ -24,3 +24,15 @@ def read_user(user_id: int, db: Session = Depends(get_db)):
     if db_user is None:
         raise HTTPException(status_code=404, detail="User not found")
     return db_user
+
+@router.get("/", response_model=list[ShowUser])
+def read_users(db: Session = Depends(get_db)):
+    users = get_all_users(db=db)
+    return users
+
+@router.delete("/{user_id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_existing_user(user_id: int, db: Session = Depends(get_db)):
+    success = delete_user(user_id=user_id, db=db)
+    if not success:
+        raise HTTPException(status_code=404, detail="User not found")
+    return None
