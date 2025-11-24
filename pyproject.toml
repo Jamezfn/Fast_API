@@ -12,6 +12,7 @@ dependencies = [
     "fastapi (>=0.121.2,<0.122.0)",
     "pydantic (>=2.12.4,<3.0.0)",
     "psycopg[binary] (>=3.2.13,<4.0.0)",
+    "alembic (>=1.17.2,<2.0.0)",
 ]
 
 
