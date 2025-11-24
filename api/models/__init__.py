@@ -1,5 +1,5 @@
 from .base import Base
-from .user import User, Profile
+from .user import UserRole, User, Profile
 from .course import (
     Course, Section, ContentBlock, ContentType, 
     StudentCourse, CompletedContentBlock, 
@@ -9,7 +9,7 @@ from .course import (
 
 __all__ = [
     'Base',
-    'User', 'Profile',
+    'UserRole', 'User', 'Profile',
     'Course', 'Section', 'ContentBlock', 'ContentType',
     'StudentCourse', 'CompletedContentBlock',
     'CompletedSection', 'CompletedCourse'
