@@ -1,7 +1,7 @@
 from sqlalchemy.orm import Session
 
-from api.models import User, Profile, Course, UserRole, Section, ContentBlock
-
+from api.models import (User, Profile, Course, UserRole, 
+                        Section, ContentBlock, StudentCourse, CompletedContentBlock)
 
 def create_course(request: dict, db: Session):
     course = db.query(Course).filter(Course.title == request.title).first()
@@ -136,3 +136,17 @@ def get_all_content_blocks(db: Session):
 
 def get_content_blocks_by_section_id(section_id: int, db: Session):
     return db.query(ContentBlock).filter(ContentBlock.section_id == section_id).all()
+
+
+def enroll_student(student_id: int, course_id: int, db: Session):
+    enrolled = db.query(StudentCourse).filter(StudentCourse.student_id == student_id, StudentCourse.course_id == course_id).first()
+    if enrolled:
+        return None 
+    student_course = StudentCourse(
+        student_id=student_id,
+        course_id=course_id,
+    )
+    db.add(student_course)
+    db.commit()
+
+    return student_course

@@ -5,13 +5,14 @@ from typing import List
 from db import get_db
 from schemas.course import(
     ContentBlockCreate, ContentBlockResponse, CourseCreate, CourseShow, CourseUpdate, 
-    SectionCreate, SectionShow, SectionUpdate, ContentBlockUpdate, )
+    SectionCreate, SectionShow, SectionUpdate, ContentBlockUpdate, StudentCourse)
 from api.models.user import User
 from api.crud.course import (
     create_course, create_section, get_course, get_course_by_teacher, get_courses,
     update_course, delete_course, get_section, update_section, delete_section,
     create_content_block, get_content_block, update_content_block, delete_content_block, get_all_content_blocks,
-    get_content_blocks_by_section_id)
+    get_content_blocks_by_section_id, enroll_student)
+from api.crud.user import get_user_by_id
 
 router = APIRouter(
     prefix="/courses",
@@ -193,4 +194,26 @@ def delete_content_block_by_section_id_and_content_block_id(section_id: int, con
             detail="Content block not found"
             )
     
+    return result
+
+@router.post('/enroll_student', response_model=StudentCourse)
+def enroll_student_route(student_id: int, course_id: int, db: Session = Depends(get_db)):
+    student = get_user_by_id(student_id, db)
+    if student is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, 
+            detail="Student not found"
+            )
+    course = get_course(course_id, db)
+    if course is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, 
+            detail="Course not found"
+            )
+    result = enroll_student(student_id, course_id, db)
+    if result is None:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT, 
+            detail="Student is already enrolled in this course"
+            )
     return result

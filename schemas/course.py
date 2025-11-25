@@ -64,3 +64,16 @@ class ContentBlockUpdate(BaseModel):
 class ContentBlockResponse(ContentBlockBase):
     id: int
     section_id: int
+
+class StudentCourse(BaseModel):
+    student_id: int
+    course_id: int
+    enrolled_at: datetime
+    progress_percentage: int
+
+
+class StudentCourseResponse(BaseModel):
+    student_id: int
+    course_id: int
+    enrolled_at: datetime
+    progress_percentage: int
