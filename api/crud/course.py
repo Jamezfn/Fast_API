@@ -1,6 +1,6 @@
 from sqlalchemy.orm import Session
 
-from api.models import User, Profile, Course, UserRole, Section
+from api.models import User, Profile, Course, UserRole, Section, ContentBlock
 
 
 def create_course(request: dict, db: Session):
@@ -89,3 +89,50 @@ def delete_section(section_id: int, db: Session):
     db.delete(section)
     db.commit()
     return section
+
+def create_content_block(section_id: int, content_block: dict, db: Session):
+    section = db.query(Section).filter(Section.id == section_id).first()
+    if not section:
+        return None
+    
+    new_content_block = ContentBlock(
+        title=content_block.title,
+        content_type=content_block.content_type,
+        order_index=content_block.order_index,
+        url=content_block.url,
+        content=content_block.content,
+        duration_minutes=content_block.duration_minutes,
+        section_id=section_id
+    )
+    
+    db.add(new_content_block)
+    db.commit()
+    return new_content_block
+
+def get_content_block(content_block_id: int, db: Session):
+    return db.query(ContentBlock).filter(ContentBlock.id == content_block_id).first()
+
+def update_content_block(content_block_id: int, request: dict, db: Session):
+    content_block = db.query(ContentBlock).filter(ContentBlock.id == content_block_id).first()
+    if not content_block:
+        return None
+    
+    content_block.title = request.title
+    content_block.description = request.description
+    db.commit()
+    return content_block
+
+def delete_content_block(content_block_id: int, db: Session):
+    content_block = db.query(ContentBlock).filter(ContentBlock.id == content_block_id).first()
+    if not content_block:
+        return None
+    
+    db.delete(content_block)
+    db.commit()
+    return content_block
+
+def get_all_content_blocks(db: Session):
+    return db.query(ContentBlock).all()
+
+def get_content_blocks_by_section_id(section_id: int, db: Session):
+    return db.query(ContentBlock).filter(ContentBlock.section_id == section_id).all()

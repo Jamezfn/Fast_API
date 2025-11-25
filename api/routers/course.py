@@ -3,11 +3,15 @@ from sqlalchemy.orm import Session
 from typing import List
 
 from db import get_db
-from schemas.course import CourseCreate, CourseShow, CourseUpdate, SectionCreate, SectionShow, SectionUpdate
+from schemas.course import(
+    ContentBlockCreate, ContentBlockResponse, CourseCreate, CourseShow, CourseUpdate, 
+    SectionCreate, SectionShow, SectionUpdate, ContentBlockUpdate, )
 from api.models.user import User
 from api.crud.course import (
     create_course, create_section, get_course, get_course_by_teacher, get_courses,
-    update_course, delete_course, get_section, update_section, delete_section)
+    update_course, delete_course, get_section, update_section, delete_section,
+    create_content_block, get_content_block, update_content_block, delete_content_block, get_all_content_blocks,
+    get_content_blocks_by_section_id)
 
 router = APIRouter(
     prefix="/courses",
@@ -121,6 +125,72 @@ def delete_section_by_id(section_id: int, db: Session = Depends(get_db)):
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, 
             detail="Section not found"
+            )
+    
+    return result
+
+@router.get('/section/content/all_content_blocks', response_model=List[ContentBlockResponse])
+def get_all_content_blocks_route(db: Session = Depends(get_db)):
+    result = get_all_content_blocks(db)
+    if result is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, 
+            detail="No content blocks found"
+            )
+    
+    return result
+
+@router.post('/section/{section_id}/create_content_block', response_model=ContentBlockCreate)
+def create_content_block_by_section_id(section_id: int, request: ContentBlockCreate, db: Session = Depends(get_db)):
+    result = create_content_block(section_id, request, db)
+    if result is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, 
+            detail="Section not found"
+            )
+    
+    return result   
+
+@router.get('/section/{section_id}/content_blocks')
+def get_content_blocks_by_section_id_route(section_id: int, db: Session = Depends(get_db)):
+    result = get_content_blocks_by_section_id(section_id, db)
+    if result is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, 
+            detail="Section not found"
+            )
+    
+    return result
+
+@router.get('/section/{section_id}/content_blocks/{content_block_id}')
+def get_content_block_by_section_id_and_content_block_id_route(section_id: int, content_block_id: int, db: Session = Depends(get_db)):
+    result = get_content_block(section_id, content_block_id, db)
+    if result is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, 
+            detail="Content block not found"
+            )
+    
+    return result
+
+@router.put('/section/{section_id}/content_blocks/{content_block_id}', response_model=ContentBlockUpdate)
+def update_content_block_by_section_id_and_content_block_id(section_id: int, content_block_id: int, request: ContentBlockUpdate, db: Session = Depends(get_db)):
+    result = update_content_block(section_id, content_block_id, request, db)
+    if result is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, 
+            detail="Content block not found"
+            )
+    
+    return result
+
+@router.delete('/section/{section_id}/content_blocks/{content_block_id}', status_code=status.HTTP_204_NO_CONTENT)
+def delete_content_block_by_section_id_and_content_block_id(section_id: int, content_block_id: int, db: Session = Depends(get_db)):
+    result = delete_content_block(section_id, content_block_id, db)
+    if result is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, 
+            detail="Content block not found"
             )
     
     return result
