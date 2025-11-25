@@ -5,8 +5,10 @@ from typing import List
 from db import get_db
 from schemas.course import(
     ContentBlockCreate, ContentBlockResponse, CourseCreate, CourseShow, CourseUpdate, 
-    SectionCreate, SectionShow, SectionUpdate, ContentBlockUpdate, StudentCourse)
+    SectionCreate, SectionShow, SectionUpdate, ContentBlockUpdate, StudentCourse, 
+    CompletedContentBlockCreate, CompletedContentBlockUpdate, CompletedContentBlockResponse)
 from api.models.user import User
+from api.models.course import CompletedContentBlock, ContentBlock
 from api.crud.course import (
     create_course, create_section, get_course, get_course_by_teacher, get_courses,
     update_course, delete_course, get_section, update_section, delete_section,
@@ -217,3 +219,122 @@ def enroll_student_route(student_id: int, course_id: int, db: Session = Depends(
             detail="Student is already enrolled in this course"
             )
     return result
+
+@router.post("/content-blocks", response_model=CompletedContentBlockResponse)
+def mark_content_block_completed(
+    completion_data: CompletedContentBlockCreate,
+    db: Session = Depends(get_db)
+):
+    """Mark a content block as completed by a student"""
+    student = db.query(User).filter(User.id == completion_data.student_id).first()
+    if not student:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Student not found"
+        )
+    
+
+    content_block = db.query(ContentBlock).filter(ContentBlock.id == completion_data.content_block_id).first()
+    if not content_block:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Content block not found"
+        )
+    
+    existing_completion = db.query(CompletedContentBlock).filter(
+        CompletedContentBlock.student_id == completion_data.student_id,
+        CompletedContentBlock.content_block_id == completion_data.content_block_id
+    ).first()
+    
+    if existing_completion:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Content block already completed by student"
+        )
+    
+    completion = CompletedContentBlock(
+        student_id=completion_data.student_id,
+        content_block_id=completion_data.content_block_id,
+        section_id=completion_data.section_id,
+        url=completion_data.url,
+        grade=completion_data.grade,
+        feedback=completion_data.feedback
+    )
+    
+    db.add(completion)
+    db.commit()
+    db.refresh(completion)
+    return completion
+
+@router.get("/student/{student_id}/content-blocks", response_model=List[CompletedContentBlockResponse])
+def get_student_completed_blocks(student_id: int, db: Session = Depends(get_db)):
+    """Get all content blocks completed by a student"""
+    completions = db.query(CompletedContentBlock).filter(
+        CompletedContentBlock.student_id == student_id
+    ).all()
+    return completions
+
+@router.get("/content-block/{content_block_id}/students", response_model=List[CompletedContentBlockResponse])
+def get_content_block_completions(content_block_id: int, db: Session = Depends(get_db)):
+    """Get all students who completed a specific content block"""
+    completions = db.query(CompletedContentBlock).filter(
+        CompletedContentBlock.content_block_id == content_block_id
+    ).all()
+    return completions
+
+@router.get("/section/{section_id}/completions", response_model=List[CompletedContentBlockResponse])
+def get_section_completions(section_id: int, db: Session = Depends(get_db)):
+    """Get all completions in a section"""
+    completions = db.query(CompletedContentBlock).filter(
+        CompletedContentBlock.section_id == section_id
+    ).all()
+    return completions
+
+@router.put("/content-blocks/{content_block_id}/student/{student_id}", response_model=CompletedContentBlockResponse)
+def update_completion(
+    student_id: int,
+    content_block_id: int,
+    update_data: CompletedContentBlockUpdate,
+    db: Session = Depends(get_db)
+):
+    """Update completion details (grade, feedback, etc.)"""
+    completion = db.query(CompletedContentBlock).filter(
+        CompletedContentBlock.student_id == student_id,
+        CompletedContentBlock.content_block_id == content_block_id
+    ).first()
+    
+    if not completion:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Completion record not found"
+        )
+    
+    update_fields = update_data.model_dump(exclude_unset=True)
+    for field, value in update_fields.items():
+        setattr(completion, field, value)
+    
+    db.commit()
+    db.refresh(completion)
+    return completion
+
+@router.delete("/content-blocks/{content_block_id}/student/{student_id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_completion(
+    student_id: int,
+    content_block_id: int,
+    db: Session = Depends(get_db)
+):
+    """Remove a completion record"""
+    completion = db.query(CompletedContentBlock).filter(
+        CompletedContentBlock.student_id == student_id,
+        CompletedContentBlock.content_block_id == content_block_id
+    ).first()
+    
+    if not completion:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Completion record not found"
+        )
+    
+    db.delete(completion)
+    db.commit()
+    return None

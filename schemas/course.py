@@ -77,3 +77,26 @@ class StudentCourseResponse(BaseModel):
     course_id: int
     enrolled_at: datetime
     progress_percentage: int
+
+class CompletedContentBlockBase(BaseModel):
+    url: Optional[str] = None
+    grade: Optional[int] = None
+    feedback: Optional[str] = None
+    section_id: int
+
+class CompletedContentBlockCreate(CompletedContentBlockBase):
+    student_id: int
+    content_block_id: int
+
+class CompletedContentBlockUpdate(BaseModel):
+    url: Optional[str] = None
+    grade: Optional[int] = None
+    feedback: Optional[str] = None
+
+class CompletedContentBlockResponse(CompletedContentBlockBase):
+    student_id: int
+    content_block_id: int
+    submitted_at: datetime
+    updated_at: datetime
+
+    model_config = ConfigDict(from_attributes=True)
